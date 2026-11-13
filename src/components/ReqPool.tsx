@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback, type RefObject } from 'react'
+import Icon from './Icon'
 import {
   REQ_STATUSES,
   PRIORITIES,
   type Requirement,
-  type RequirementStatus,
+  type RequirementAttachment,
   type Priority,
+  type RequirementStatus,
   uid,
 } from '../lib/store'
 
@@ -13,22 +15,209 @@ interface Props {
   requirements: Requirement[]
   onAdd: (r: Requirement) => void
   onOpenTrack: (reqId: string) => void
+  activeReqId: string | null
   openSignal: number
+  searchQuery?: string
+  variant?: 'pool' | 'prd'
+  onOpenPrd?: (reqId: string, mode: 'view' | 'edit') => void
 }
 
-export default function ReqPool({ spaceId, requirements, onAdd, onOpenTrack, openSignal }: Props) {
+interface MiniScrollbarProps {
+  viewportRef: RefObject<HTMLDivElement>
+  orientation: 'vertical' | 'horizontal'
+}
+
+function MiniScrollbar({ viewportRef, orientation }: MiniScrollbarProps) {
+  const [metrics, setMetrics] = useState({ viewport: 0, content: 0, scroll: 0 })
+  const [dragging, setDragging] = useState(false)
+
+  const refresh = useCallback(() => {
+    const el = viewportRef.current
+    if (!el) return
+    setMetrics(orientation === 'vertical'
+      ? { viewport: el.clientHeight, content: el.scrollHeight, scroll: el.scrollTop }
+      : { viewport: el.clientWidth, content: el.scrollWidth, scroll: el.scrollLeft })
+  }, [orientation, viewportRef])
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+    refresh()
+    el.addEventListener('scroll', refresh, { passive: true })
+    const observer = new ResizeObserver(refresh)
+    observer.observe(el)
+    const mutationObserver = new MutationObserver(refresh)
+    mutationObserver.observe(el, { childList: true, subtree: true })
+    return () => {
+      el.removeEventListener('scroll', refresh)
+      observer.disconnect()
+      mutationObserver.disconnect()
+    }
+  }, [refresh, viewportRef])
+
+  if (metrics.content <= metrics.viewport + 1) return null
+
+  const trackSize = metrics.viewport
+  const thumbSize = Math.min(56, Math.max(18, trackSize * metrics.viewport / metrics.content))
+  const maxThumbOffset = Math.max(0, trackSize - thumbSize)
+  const maxScroll = Math.max(1, metrics.content - metrics.viewport)
+  const thumbOffset = maxThumbOffset * metrics.scroll / maxScroll
+
+  function startDrag(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault()
+    const startPoint = orientation === 'vertical' ? event.clientY : event.clientX
+    const startScroll = metrics.scroll
+    const ratio = maxScroll / Math.max(1, maxThumbOffset)
+    setDragging(true)
+
+    function move(moveEvent: PointerEvent) {
+      const point = orientation === 'vertical' ? moveEvent.clientY : moveEvent.clientX
+      const el = viewportRef.current
+      if (!el) return
+      const nextScroll = startScroll + (point - startPoint) * ratio
+      if (orientation === 'vertical') el.scrollTop = nextScroll
+      else el.scrollLeft = nextScroll
+    }
+
+    function stop() {
+      setDragging(false)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+    }
+
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop)
+  }
+
+  return (
+    <div className={`mini-scrollbar mini-scrollbar--${orientation}${dragging ? ' is-dragging' : ''}`} aria-hidden="true">
+      <div
+        className="mini-scrollbar__thumb"
+        style={orientation === 'vertical'
+          ? { height: `${thumbSize}px`, transform: `translateY(${thumbOffset}px)` }
+          : { width: `${thumbSize}px`, transform: `translateX(${thumbOffset}px)` }}
+        onPointerDown={startDrag}
+      />
+    </div>
+  )
+}
+
+interface StatusGroupProps {
+  status: RequirementStatus
+  items: Requirement[]
+  activeReqId: string | null
+  onOpenTrack: (reqId: string) => void
+  variant: 'pool' | 'prd'
+  onOpenPrd?: (reqId: string, mode: 'view' | 'edit') => void
+}
+
+function versionParts(version: string) {
+  const match = version.match(/\d+(?:\.\d+)*/)
+  return match ? match[0].split('.').map((part) => Number(part)) : []
+}
+
+function compareRequirements(a: Requirement, b: Requirement) {
+  const aParts = versionParts(a.version)
+  const bParts = versionParts(b.version)
+  const length = Math.max(aParts.length, bParts.length)
+  for (let index = 0; index < length; index += 1) {
+    const aPart = aParts[index] || 0
+    const bPart = bParts[index] || 0
+    if (aPart !== bPart) return bPart - aPart
+  }
+  return b.createdAt - a.createdAt
+}
+
+function StatusGroup({ status, items, activeReqId, onOpenTrack, variant, onOpenPrd }: StatusGroupProps) {
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  return (
+    <div className={`status-group status-group--${status === '调研中' ? 'research' : status === '已评审' ? 'reviewed' : status === '开发中' ? 'development' : status === '测试中' ? 'testing' : 'live'}`}>
+      <div className="status-group__head">
+        <span className="status-group__name">{status}</span>
+        <span className="status-group__count">{items.length}</span>
+      </div>
+      <div className="status-group__body-shell">
+        <div className="status-group__body" ref={bodyRef}>
+          {items.length === 0 ? (
+            <div className="status-group__empty">暂无需求</div>
+          ) : items.map((r) => (
+            <div
+              key={r.id}
+              className={`req-card${activeReqId === r.id ? ' req-card--selected' : ''}`}
+              onClick={() => variant === 'prd' ? onOpenPrd?.(r.id, 'edit') : onOpenTrack(r.id)}
+              onKeyDown={(event) => {
+                if (variant === 'prd') return
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onOpenTrack(r.id)
+                }
+              }}
+              role={variant === 'prd' ? 'group' : 'button'}
+              tabIndex={variant === 'prd' ? undefined : 0}
+              aria-pressed={variant === 'prd' ? undefined : activeReqId === r.id}
+              aria-label={`${r.name}，${variant === 'prd' ? '打开 PRD' : '查看需求追踪'}`}
+            >
+              <div className="req-card__top">
+                <span className="req-card__ver">{r.version}</span>
+                <span className={`pri pri--${r.priority.toLowerCase()}`}>{r.priority}</span>
+              </div>
+              <div className="req-card__name">{r.name}</div>
+              {r.content && <div className="req-card__content">{r.content}</div>}
+              {variant === 'prd' && (
+                <span className="req-card__actions" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="req-card__action"
+                    title="查看 PRD"
+                    aria-label={`查看 ${r.name} 的 PRD`}
+                    onClick={() => onOpenPrd?.(r.id, 'view')}
+                  >
+                    <span className="icon-circle"><Icon name="eye" size={13} /></span>
+                  </button>
+                  <button
+                    type="button"
+                    className="req-card__action"
+                    title="编辑 PRD"
+                    aria-label={`编辑 ${r.name} 的 PRD`}
+                    onClick={() => onOpenPrd?.(r.id, 'edit')}
+                  >
+                    <span className="icon-circle"><Icon name="edit" size={13} /></span>
+                  </button>
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <MiniScrollbar viewportRef={bodyRef} orientation="vertical" />
+      </div>
+    </div>
+  )
+}
+
+export default function ReqPool({ spaceId, requirements, onAdd, onOpenTrack, activeReqId, openSignal, searchQuery = '', variant = 'pool', onOpenPrd }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [version, setVersion] = useState('V')
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [priority, setPriority] = useState<Priority>('P1')
-  const [status, setStatus] = useState<RequirementStatus>('调研中')
+  const [attachments, setAttachments] = useState<RequirementAttachment[]>([])
+
+  const consumedSignal = useRef(openSignal)
 
   useEffect(() => {
-    if (openSignal > 0) setShowForm(true)
+    if (openSignal !== consumedSignal.current) {
+      consumedSignal.current = openSignal
+      if (openSignal > 0) setShowForm(true)
+    }
   }, [openSignal])
 
-  const list = requirements.filter((r) => r.spaceId === spaceId)
+  const query = searchQuery.trim().toLocaleLowerCase()
+  const list = requirements
+    .filter((r) => r.spaceId === spaceId)
+    .filter((r) => !query || [r.name, r.content, r.version, r.priority, r.status].join(' ').toLocaleLowerCase().includes(query))
+    .sort(compareRequirements)
+  const groupsRef = useRef<HTMLDivElement>(null)
 
   function submit() {
     if (!name.trim()) return
@@ -39,55 +228,71 @@ export default function ReqPool({ spaceId, requirements, onAdd, onOpenTrack, ope
       name: name.trim(),
       content: content.trim(),
       priority,
-      status,
+      status: '调研中',
       createdAt: Date.now(),
+      attachments,
     })
     setShowForm(false)
     setVersion('V')
     setName('')
     setContent('')
     setPriority('P1')
-    setStatus('调研中')
+    setAttachments([])
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    setAttachments([])
+  }
+
+  function addAttachments(files: FileList | null) {
+    if (!files) return
+    const next = Array.from(files).map((file) => ({
+      id: uid(),
+      name: file.name,
+      type: file.type || 'application/octet-stream',
+      size: file.size,
+      url: URL.createObjectURL(file),
+      kind: file.type.startsWith('image/') ? 'image' as const : 'file' as const,
+    }))
+    setAttachments((prev) => [...prev, ...next])
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => {
+      const item = prev.find((a) => a.id === id)
+      if (item) URL.revokeObjectURL(item.url)
+      return prev.filter((a) => a.id !== id)
+    })
+  }
+
+  function formatSize(size: number) {
+    if (size < 1024) return `${size} B`
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`
   }
 
   return (
     <>
-      <div className="status-groups">
-        {REQ_STATUSES.map((st) => {
-          const items = list.filter((r) => r.status === st)
-          return (
-            <div key={st} className="status-group">
-              <div className="status-group__head">
-                <span className="status-group__name">{st}</span>
-                <span className="status-group__count">{items.length}</span>
-              </div>
-              <div className="status-group__body">
-                {items.length === 0 ? (
-                  <div className="status-group__empty">暂无需求</div>
-                ) : (
-                  items.map((r) => (
-                    <button
-                      key={r.id}
-                      className="req-card"
-                      onClick={() => onOpenTrack(r.id)}
-                    >
-                      <div className="req-card__top">
-                        <span className="req-card__ver">{r.version}</span>
-                        <span className={`pri pri--${r.priority.toLowerCase()}`}>{r.priority}</span>
-                      </div>
-                      <div className="req-card__name">{r.name}</div>
-                      {r.content && <div className="req-card__content">{r.content}</div>}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )
-        })}
+      <div className="status-groups-shell">
+        <div className="status-groups" ref={groupsRef}>
+          {REQ_STATUSES.map((st) => (
+            <StatusGroup
+              key={st}
+              status={st}
+              items={list.filter((r) => r.status === st)}
+              activeReqId={activeReqId}
+              onOpenTrack={onOpenTrack}
+              variant={variant}
+              onOpenPrd={onOpenPrd}
+            />
+          ))}
+        </div>
+        <MiniScrollbar viewportRef={groupsRef} orientation="horizontal" />
       </div>
 
       {showForm && (
-        <div className="overlay" onClick={() => setShowForm(false)}>
+        <div className="overlay" onClick={closeForm}>
           <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal__title">新增需求</div>
 
@@ -123,39 +328,67 @@ export default function ReqPool({ spaceId, requirements, onAdd, onOpenTrack, ope
               placeholder="背景、目标、验收标准…"
             />
 
-            <div className="form-row" style={{ marginTop: 16 }}>
-              <div style={{ flex: 1 }}>
-                <div className="field-label">优先级</div>
-                <div className="chip-row">
-                  {PRIORITIES.map((p) => (
-                    <button
-                      key={p}
-                      className={`chip${priority === p ? ' chip--on' : ''}`}
-                      onClick={() => setPriority(p)}
-                    >
-                      {p}
-                    </button>
+            <div className="attachment-field">
+              <div className="field-label">附件</div>
+              <label className="attachment-picker">
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    addAttachments(e.target.files)
+                    e.currentTarget.value = ''
+                  }}
+                />
+                <span className="attachment-picker__icon">+</span>
+                <span>
+                  <strong>添加图片或文件</strong>
+                  <small>支持同时选择多个附件，当前仅本地预览</small>
+                </span>
+              </label>
+              {attachments.length > 0 && (
+                <div className="attachment-list">
+                  {attachments.map((attachment) => (
+                    <div className="attachment-item" key={attachment.id}>
+                      {attachment.kind === 'image' ? (
+                        <img className="attachment-item__thumb" src={attachment.url} alt={attachment.name} />
+                      ) : (
+                        <div className="attachment-item__file-icon">文件</div>
+                      )}
+                      <div className="attachment-item__meta">
+                        <span>{attachment.name}</span>
+                        <small>{formatSize(attachment.size)}</small>
+                      </div>
+                      <button
+                        type="button"
+                        className="attachment-item__remove"
+                        onClick={() => removeAttachment(attachment.id)}
+                        aria-label={`删除附件 ${attachment.name}`}
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
-              </div>
-              <div style={{ flex: 1.6 }}>
-                <div className="field-label">需求状态</div>
-                <div className="chip-row">
-                  {REQ_STATUSES.map((s) => (
-                    <button
-                      key={s}
-                      className={`chip${status === s ? ' chip--on' : ''}`}
-                      onClick={() => setStatus(s)}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 16 }}>
+              <div className="field-label">优先级</div>
+              <div className="chip-row">
+                {PRIORITIES.map((p) => (
+                  <button
+                    key={p}
+                    className={`chip${priority === p ? ' chip--on' : ''}`}
+                    onClick={() => setPriority(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="modal__actions">
-              <button className="btn-ghost" onClick={() => setShowForm(false)}>
+              <button className="btn-ghost" onClick={closeForm}>
                 取消
               </button>
               <button

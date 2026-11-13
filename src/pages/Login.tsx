@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Icon from '../components/Icon'
 import { ALLOWED_PHONES } from '../lib/store'
 
 interface Props {
@@ -23,9 +22,6 @@ export default function Login({ onLogin }: Props) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="login-title">工作空间</div>
-        <div className="login-sub">输入手机号进入</div>
-
         <input
           className="text-input"
           style={{ letterSpacing: '0.02em' }}
@@ -40,17 +36,12 @@ export default function Login({ onLogin }: Props) {
         />
 
         <button className="login-btn" onClick={submit}>
-          进入
+          登录
         </button>
 
         {error && (
-          <div className="alert-error">
-            <Icon name="warning" size={13} />
-            <span>{error}</span>
-          </div>
+          <div className="alert-error">{error}</div>
         )}
-
-        <div className="login-hint">仅限指定账号使用</div>
       </div>
     </div>
   )

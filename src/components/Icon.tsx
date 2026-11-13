@@ -1,146 +1,48 @@
+import type { ReactNode } from 'react'
+
 interface Props {
   name: string
   size?: number
   color?: string
+  strokeWidth?: number
 }
 
-const paths: Record<string, JSX.Element> = {
-  doc: (
-    <>
-      <rect x="3" y="4" width="18" height="14" rx="2" />
-      <line x1="8" y1="21" x2="16" y2="21" />
-    </>
-  ),
-  trend: (
-    <>
-      <polyline points="3 17 9 11 13 15 21 7" />
-    </>
-  ),
-  chat: (
-    <>
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v5l3 2" />
-    </>
-  ),
-  grid: (
-    <>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <line x1="9" y1="4" x2="9" y2="20" />
-      <line x1="15" y1="4" x2="15" y2="20" />
-    </>
-  ),
-  alert: (
-    <>
-      <path d="M12 3 L22 20 L2 20 Z" />
-      <line x1="12" y1="9" x2="12" y2="14" />
-    </>
-  ),
-  flag: (
-    <>
-      <path d="M5 21V4h10l-2 4 2 4H5" />
-    </>
-  ),
-  tag: (
-    <>
-      <path d="M20 12l-8 8-8-8V4h8z" />
-      <circle cx="8" cy="8" r="1.2" />
-    </>
-  ),
-  box: (
-    <>
-      <path d="M3 8l9-5 9 5v8l-9 5-9-5z" />
-      <path d="M3 8l9 5 9-5" />
-    </>
-  ),
-  calc: (
-    <>
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <line x1="9" y1="8" x2="15" y2="8" />
-    </>
-  ),
-  panelLeft: (
-    <>
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <line x1="9" y1="3" x2="9" y2="21" />
-      <polyline points="16 10 13 12 16 14" />
-    </>
-  ),
-  panelRight: (
-    <>
-      <rect x="3" y="3" width="18" height="18" rx="3" />
-      <line x1="9" y1="3" x2="9" y2="21" />
-      <polyline points="13 10 16 12 13 14" />
-    </>
-  ),
-  expand: (
-    <>
-      <polyline points="15 3 21 3 21 9" />
-      <polyline points="9 21 3 21 3 15" />
-      <line x1="21" y1="3" x2="14" y2="10" />
-      <line x1="3" y1="21" x2="10" y2="14" />
-    </>
-  ),
-  collapse: (
-    <>
-      <polyline points="4 14 10 14 10 20" />
-      <polyline points="20 10 14 10 14 4" />
-      <line x1="14" y1="10" x2="21" y2="3" />
-      <line x1="3" y1="21" x2="10" y2="14" />
-    </>
-  ),
-  logout: (
-    <>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </>
-  ),
-  dots: (
-    <>
-      <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-      <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
-    </>
-  ),
-  plus: (
-    <>
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </>
-  ),
-  check: (
-    <>
-      <polyline points="20 6 9 17 4 12" />
-    </>
-  ),
-  warning: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <line x1="12" y1="7.5" x2="12" y2="13" />
-      <line x1="12" y1="16.5" x2="12.01" y2="16.5" />
-    </>
-  ),
+// Lucide-inspired local icon set. Existing <Icon name="..." /> calls stay unchanged.
+const paths: Record<string, ReactNode> = {
+  doc: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+  trend: <><path d="m3 17 6-6 4 4 8-8" /><path d="M15 7h6v6" /></>,
+  chat: <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.6 9.6 0 0 1-4-.9L3 21l1.9-4A8.3 8.3 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z" />,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  grid: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
+  alert: <><path d="m10.3 3.9-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></>,
+  flag: <path d="M5 21V4h10l-2 4 2 4H5" />,
+  tag: <><path d="M12.6 2.8 21 11.2a2 2 0 0 1 0 2.8l-7 7a2 2 0 0 1-2.8 0l-8.4-8.4A2 2 0 0 1 2.2 11V4a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.8Z" /><circle cx="7.5" cy="7.5" r="1" /></>,
+  box: <><path d="m21 8-9-5-9 5 9 5 9-5Z" /><path d="M3 8v8l9 5 9-5V8M12 13v8" /></>,
+  calc: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2" /></>,
+  panelLeft: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M14 9l-3 3 3 3" /></>,
+  panelRight: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M15 3v18M10 9l3 3-3 3" /></>,
+  expand: <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />,
+  collapse: <path d="m9 14 3-3 3 3M9 10l3 3 3-3" />,
+  logout: <><path d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-4M15 21h4a2 2 0 0 0 2-2" /></>,
+  arrowLeft: <><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></>,
+  search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
+  dots: <><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" /></>,
+  plus: <><path d="M5 12h14" /><path d="M12 5v14" /></>,
+  minus: <path d="M5 12h14" />,
+  close: <path d="m6 6 12 12M18 6 6 18" />,
+  eye: <><path d="M2.5 12s3.4-5 9.5-5 9.5 5 9.5 5-3.4 5-9.5 5-9.5-5-9.5-5Z" /><circle cx="12" cy="12" r="2.5" /></>,
+  edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></>,
+  check: <path d="m5 12 4 4L19 6" />,
+  warning: <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5M12 16.5h.01" /></>,
+  bold: <path d="M7 5h5a4 4 0 0 1 0 8H7zm0 8h6a4 4 0 0 1 0 8H7z" />,
+  italic: <path d="M10 5h8M6 19h8M14 5 10 19" />,
+  link: <><path d="M10 13a5 5 0 0 0 7.5.5l1.5-1.5a5 5 0 0 0-7-7L11 6" /><path d="M14 11a5 5 0 0 0-7.5-.5L5 12a5 5 0 0 0 7 7l1-1" /></>,
+  list: <><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3 6h.01M3 12h.01M3 18h.01" /></>,
+  listOrdered: <><path d="M10 6h11M10 12h11M10 18h11" /><path d="M4 5h1v4M4 9h2M6 15H4l2 2-2 2h2M4 12h2" /></>,
+  code: <><path d="m8 9-3 3 3 3M16 9l3 3-3 3M14 5l-4 14" /></>,
+  grip: <><circle cx="9" cy="6" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="6" r="1" fill="currentColor" stroke="none" /><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="9" cy="18" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="18" r="1" fill="currentColor" stroke="none" /></>,
 }
 
-export default function Icon({ name, size = 16, color = 'currentColor' }: Props) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ flexShrink: 0 }}
-    >
-      {paths[name] || paths.doc}
-    </svg>
-  )
+export default function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.75 }: Props) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">{paths[name] || paths.doc}</svg>
 }

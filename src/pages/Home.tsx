@@ -24,6 +24,7 @@ export default function Home({
   onThemeChange,
   onLogout,
 }: Props) {
+  const [searchQuery, setSearchQuery] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newTypes, setNewTypes] = useState<TypeName[]>([])
@@ -65,7 +66,15 @@ export default function Home({
 
   return (
     <>
-      <TopBar title="工作空间" theme={theme} onThemeChange={onThemeChange} onLogout={onLogout} />
+      <TopBar
+        title="工作空间"
+        hideTitle
+        theme={theme}
+        onThemeChange={onThemeChange}
+        onLogout={onLogout}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
       <div className="page">
         <div className="page__head">
@@ -76,14 +85,20 @@ export default function Home({
           </button>
         </div>
 
-        {spaces.length === 0 ? (
+        {spaces.filter((s) => {
+          const q = searchQuery.trim().toLocaleLowerCase()
+          return !q || [s.name, ...s.types].join(' ').toLocaleLowerCase().includes(q)
+        }).length === 0 ? (
           <div className="empty">
             <div>还没有空间</div>
             <div className="empty__hint">点击右上角「+ 新建空间」开始</div>
           </div>
         ) : (
           <div className="space-grid">
-            {spaces.map((s) => (
+            {spaces.filter((s) => {
+              const q = searchQuery.trim().toLocaleLowerCase()
+              return !q || [s.name, ...s.types].join(' ').toLocaleLowerCase().includes(q)
+            }).map((s) => (
               <div key={s.id} className="space-card" onClick={() => onOpen(s)}>
                 <div className="space-card__top">
                   <div className="space-card__name">{s.name}</div>

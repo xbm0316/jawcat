@@ -36,6 +36,36 @@ export interface Requirement {
   priority: Priority
   status: RequirementStatus
   createdAt: number
+  attachments?: RequirementAttachment[]
+  prd?: RequirementPrd
+}
+
+export interface PrdTableRow {
+  id: string
+  module: string
+  change: string
+  note: string
+}
+
+export type PrdOptionalSection = 'competitor' | 'business-flow' | 'system-flow' | 'state-machine'
+
+export interface RequirementPrd {
+  background: string
+  explanation: string
+  contentRows: PrdTableRow[]
+  changeLog: string
+  optionalSections: PrdOptionalSection[]
+  optionalContent: Partial<Record<PrdOptionalSection, string>>
+  updatedAt: number
+}
+
+export interface RequirementAttachment {
+  id: string
+  name: string
+  type: string
+  size: number
+  url: string
+  kind: 'image' | 'file'
 }
 
 export interface Competitor {
@@ -63,9 +93,7 @@ export const MENUS: Record<TypeName, MenuDef[]> = {
   产品经理: [
     { key: 'req', label: '需求池', icon: 'doc' },
     { key: 'comp', label: '竞品分析', icon: 'trend' },
-    { key: 'research', label: '需求调研', icon: 'chat' },
     { key: 'prd', label: '需求PRD', icon: 'grid' },
-    { key: 'track', label: '需求追踪', icon: 'flag' },
     { key: 'retro', label: '复盘记录', icon: 'clock' },
   ],
   项目经理: [

@@ -36,6 +36,8 @@ export default function App() {
 
   function handleLogout() {
     setActiveSpaceId(null)
+    saveSession(null)
+    setPhone(null)
   }
 
   async function createSpace(name: string, types: TypeName[]) {
@@ -77,7 +79,7 @@ export default function App() {
         space={activeSpace}
         theme={theme}
         onThemeChange={setTheme}
-        onLogout={handleLogout}
+        onBackToHome={() => setActiveSpaceId(null)}
       />
     )
   }

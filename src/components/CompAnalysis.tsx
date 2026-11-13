@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { type Competitor, uid } from '../lib/store'
 
 interface Props {
@@ -6,19 +6,28 @@ interface Props {
   competitors: Competitor[]
   onAdd: (c: Competitor) => void
   openSignal: number
+  searchQuery?: string
 }
 
-export default function CompAnalysis({ spaceId, competitors, onAdd, openSignal }: Props) {
+export default function CompAnalysis({ spaceId, competitors, onAdd, openSignal, searchQuery = '' }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [detail, setDetail] = useState<Competitor | null>(null)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
+  const consumedSignal = useRef(openSignal)
 
   useEffect(() => {
-    if (openSignal > 0) setShowForm(true)
+    if (openSignal !== consumedSignal.current) {
+      consumedSignal.current = openSignal
+      if (openSignal > 0) setShowForm(true)
+    }
   }, [openSignal])
 
-  const list = competitors.filter((c) => c.spaceId === spaceId)
+  const query = searchQuery.trim().toLocaleLowerCase()
+  const list = competitors
+    .filter((c) => c.spaceId === spaceId)
+    .filter((c) => !query || [c.name, c.url].join(' ').toLocaleLowerCase().includes(query))
+    .sort((a, b) => b.createdAt - a.createdAt)
 
   function submit() {
     if (!name.trim()) return
@@ -38,7 +47,7 @@ export default function CompAnalysis({ spaceId, competitors, onAdd, openSignal }
     <>
       {list.length === 0 ? (
         <div className="empty" style={{ padding: '36px 12px' }}>
-          <div style={{ fontSize: 12.5 }}>暂无竞品</div>
+          <div style={{ fontSize: 12.5 }}>{query ? '没有匹配结果' : '暂无竞品'}</div>
         </div>
       ) : (
         <div className="comp-grid">

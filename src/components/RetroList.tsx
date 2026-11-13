@@ -6,13 +6,18 @@ interface Props {
   requirements: Requirement[]
   retros: Retro[]
   onAddRetro: (reqId: string, content: string) => void
+  searchQuery?: string
 }
 
-export default function RetroList({ spaceId, requirements, retros, onAddRetro }: Props) {
+export default function RetroList({ spaceId, requirements, retros, onAddRetro, searchQuery = '' }: Props) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
 
-  const list = requirements.filter((r) => r.spaceId === spaceId && r.status === '已上线')
+  const query = searchQuery.trim().toLocaleLowerCase()
+  const list = requirements
+    .filter((r) => r.spaceId === spaceId && r.status === '已上线')
+    .filter((r) => !query || [r.name, r.content].join(' ').toLocaleLowerCase().includes(query))
+    .sort((a, b) => b.createdAt - a.createdAt)
   const current = list.find((r) => r.id === openId)
   const currentRetros = retros.filter((x) => x.reqId === openId).sort((a, b) => a.createdAt - b.createdAt)
 
@@ -26,8 +31,8 @@ export default function RetroList({ spaceId, requirements, retros, onAddRetro }:
     <>
       {list.length === 0 ? (
         <div className="empty" style={{ padding: '36px 12px' }}>
-          <div style={{ fontSize: 12.5 }}>暂无已上线需求</div>
-          <div className="empty__hint">需求状态变为「已上线」后出现在这里</div>
+          <div style={{ fontSize: 12.5 }}>{query ? '没有匹配结果' : '暂无已上线需求'}</div>
+          {!query && <div className="empty__hint">需求状态变为「已上线」后出现在这里</div>}
         </div>
       ) : (
         <div className="comp-grid">
