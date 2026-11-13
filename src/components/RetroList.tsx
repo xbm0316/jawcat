@@ -1,0 +1,107 @@
+import { useState } from 'react'
+import { type Requirement, type Retro } from '../lib/store'
+
+interface Props {
+  spaceId: string
+  requirements: Requirement[]
+  retros: Retro[]
+  onAddRetro: (reqId: string, content: string) => void
+}
+
+export default function RetroList({ spaceId, requirements, retros, onAddRetro }: Props) {
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+
+  const list = requirements.filter((r) => r.spaceId === spaceId && r.status === '已上线')
+  const current = list.find((r) => r.id === openId)
+  const currentRetros = retros.filter((x) => x.reqId === openId).sort((a, b) => a.createdAt - b.createdAt)
+
+  function save() {
+    if (!openId || !draft.trim()) return
+    onAddRetro(openId, draft.trim())
+    setDraft('')
+  }
+
+  return (
+    <>
+      {list.length === 0 ? (
+        <div className="empty" style={{ padding: '36px 12px' }}>
+          <div style={{ fontSize: 12.5 }}>暂无已上线需求</div>
+          <div className="empty__hint">需求状态变为「已上线」后出现在这里</div>
+        </div>
+      ) : (
+        <div className="comp-grid">
+          {list.map((r) => {
+            const cnt = retros.filter((x) => x.reqId === r.id).length
+            return (
+              <div key={r.id} className="retro-card">
+                <div className="retro-card__top">
+                  <span className="retro-card__ver">{r.version}</span>
+                  <span className={`pri pri--${r.priority.toLowerCase()}`}>{r.priority}</span>
+                </div>
+                <div className="retro-card__name">{r.name}</div>
+                <div className="retro-card__foot">
+                  <span className="retro-card__cnt">{cnt > 0 ? `${cnt} 篇复盘` : '未复盘'}</span>
+                  <button
+                    className="retro-card__btn"
+                    onClick={() => {
+                      setOpenId(r.id)
+                      setDraft('')
+                    }}
+                  >
+                    复盘
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {current && (
+        <div className="overlay" onClick={() => setOpenId(null)}>
+          <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__title">复盘 · {current.name}</div>
+
+            <div className="retro-list">
+              {currentRetros.length === 0 ? (
+                <div className="retro-list__empty">还没有复盘记录</div>
+              ) : (
+                currentRetros.map((x, i) => (
+                  <div key={x.id} className="retro-item">
+                    <div className="retro-item__idx">{String(i + 1).padStart(2, '0')}</div>
+                    <div className="retro-item__content">{x.content}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="field-label" style={{ marginTop: 18 }}>
+              写复盘
+            </div>
+            <textarea
+              className="text-area"
+              rows={4}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="做得好的是什么，下次改什么…"
+            />
+
+            <div className="modal__actions">
+              <button className="btn-ghost" onClick={() => setOpenId(null)}>
+                关闭
+              </button>
+              <button
+                className="btn-primary"
+                onClick={save}
+                style={{ opacity: draft.trim() ? 1 : 0.45 }}
+              >
+                保存复盘
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
