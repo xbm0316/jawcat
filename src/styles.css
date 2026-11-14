@@ -3516,3 +3516,78 @@ body {
   --status-soft: #1D442A;
   --status-border: #347148;
 }
+
+/* 设计规范只映射颜色与字体：布局、尺寸和交互保持原样 */
+:root {
+  --bg: #fffdf8;
+  --surface: #faf6ee;
+  --surface-2: #f0eee6;
+  --surface-sunken: #f0eee6;
+  --border: #e3dacc;
+  --text: #171513;
+  --text-2: #3a322a;
+  --text-3: #8b8376;
+  --primary: #b4532f;
+  --primary-hover: #964324;
+  --primary-soft: #f4e4db;
+  --primary-ring: rgba(125, 211, 252, 0.2);
+  --success: #397653;
+  --success-soft: #e8f3eb;
+  --warning: #a86f1f;
+  --warning-soft: #fbefd8;
+  --danger: #a4463c;
+  --danger-soft: #f8e7e2;
+  --shadow-color: rgba(23, 20, 15, 0.04);
+  --font-sans: 'TL CJK Punct', 'Geist', 'PingFang SC', 'Helvetica Neue', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Instrument Serif', Georgia, ui-serif, serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', SFMono-Regular, Consolas, monospace;
+}
+
+[data-theme='dark'] {
+  --bg: #211d18;
+  --surface: #2b251f;
+  --surface-2: #382f27;
+  --surface-sunken: #382f27;
+  --border: #594b3c;
+  --text: #fff8ed;
+  --text-2: #eadfce;
+  --text-3: #b8aa97;
+  --primary: #d4754e;
+  --primary-hover: #e18b65;
+  --primary-soft: #4c3025;
+  --primary-ring: rgba(125, 211, 252, 0.24);
+  --success: #8bc59a;
+  --success-soft: #263c2c;
+  --warning: #e2b067;
+  --warning-soft: #493820;
+  --danger: #e29a8e;
+  --danger-soft: #4b2b27;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+body,
+button,
+input,
+textarea {
+  font-family: var(--font-sans);
+}
+
+.topbar__title,
+.page__title,
+.modal__title,
+.login-title,
+.space-card__name,
+.prd-page__title-text,
+.track-detail__name {
+  font-family: var(--font-serif);
+}
+
+.btn-primary,
+.login-btn {
+  background: var(--primary-dark, #17140f);
+}
+
+.btn-primary:hover,
+.login-btn:hover {
+  background: color-mix(in srgb, var(--primary-dark, #17140f) 82%, var(--primary));
+}

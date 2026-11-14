@@ -43,6 +43,6 @@ const paths: Record<string, ReactNode> = {
   grip: <><circle cx="9" cy="6" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="6" r="1" fill="currentColor" stroke="none" /><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="9" cy="18" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="18" r="1" fill="currentColor" stroke="none" /></>,
 }
 
-export default function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.75 }: Props) {
+export default function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.7 }: Props) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">{paths[name] || paths.doc}</svg>
 }
